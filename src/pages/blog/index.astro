@@ -1,114 +1,126 @@
 ---
-import { Image } from 'astro:assets';
-import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
-import Header from '../../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
-
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+import { getCollection } from "astro:content";
+import { Search } from "@lucide/astro";
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import PostRow from "../../components/PostRow.astro";
+import { SITE_TITLE } from "../../consts";
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+const categories = [...new Set(posts.map((post) => post.data.category))];
 ---
 
 <!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
-		</main>
-		<Footer />
-	</body>
+<html lang="zh-CN" id="top">
+  <head>
+    <BaseHead
+      title={`全部文章 · ${SITE_TITLE}`}
+      description="浏览全部文章，按主题或关键词寻找感兴趣的内容。"
+    />
+  </head>
+  <body>
+    <Header />
+    <main id="main" class="wrap page">
+      <div class="list-width">
+        <p class="eyebrow">THE COLLECTION</p>
+        <h1>全部文章</h1>
+        <p class="page-lead">一些思考，一些实践，一些日常。</p>
+        <label class="search-wrap" for="search">
+          <Search size={18} />
+          <span class="sr-only">搜索文章</span>
+          <input
+            id="search"
+            type="search"
+            placeholder="搜索标题、内容或关键词…"
+            autocomplete="off"
+          />
+        </label>
+        <div class="filters" role="group" aria-label="文章分类">
+          <button data-filter="" aria-pressed="true">
+            全部
+          </button>
+          {categories.map((category) => (
+            <button data-filter={category} aria-pressed="false">
+              {category}
+            </button>
+          ))}
+        </div>
+        <p class="result-count" role="status" aria-live="polite">
+          共 {posts.length} 篇文章
+        </p>
+        <div>
+          {posts.map((post) => (
+            <PostRow post={post} searchable />
+          ))}
+        </div>
+        <div class="empty" hidden>
+          <h2>暂时没有找到相关文章</h2>
+          <p>换个关键词，或看看其他分类。</p>
+          <button id="reset-search">清除筛选</button>
+        </div>
+      </div>
+    </main>
+    <Footer />
+    <script>
+      const input = document.querySelector<HTMLInputElement>("#search")!;
+      const buttons = [
+        ...document.querySelectorAll<HTMLButtonElement>("[data-filter]"),
+      ];
+      const rows = [...document.querySelectorAll<HTMLElement>("[data-post]")];
+      const params = new URLSearchParams(location.search);
+      let category = params.get("category") ?? "";
+      if (!buttons.some((button) => button.dataset.filter === category))
+        category = "";
+      input.value = params.get("q") ?? "";
+      function filter(updateUrl = true) {
+        const terms = input.value
+          .trim()
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(Boolean);
+        let count = 0;
+        rows.forEach((row) => {
+          row.hidden = !!(
+            (category && row.dataset.category !== category) ||
+            !terms.every((term) => row.dataset.search?.includes(term))
+          );
+          if (!row.hidden) count++;
+        });
+        buttons.forEach((button) =>
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.filter === category),
+          ),
+        );
+        document.querySelector(".result-count")!.textContent =
+          `共 ${count} 篇文章`;
+        (document.querySelector(".empty") as HTMLElement).hidden = count !== 0;
+        if (updateUrl) {
+          const url = new URL(location.href);
+          if (category) url.searchParams.set("category", category);
+          else url.searchParams.delete("category");
+          if (input.value.trim()) url.searchParams.set("q", input.value.trim());
+          else url.searchParams.delete("q");
+          history.replaceState(null, "", url);
+        }
+      }
+      input.addEventListener("input", () => filter());
+      buttons.forEach((button) =>
+        button.addEventListener("click", () => {
+          category = button.dataset.filter ?? "";
+          filter();
+        }),
+      );
+      document.querySelector("#reset-search")?.addEventListener("click", () => {
+        category = "";
+        input.value = "";
+        filter();
+        input.focus();
+      });
+      filter(false);
+      if (location.hash === "#search") input.focus();
+    </script>
+  </body>
 </html>
