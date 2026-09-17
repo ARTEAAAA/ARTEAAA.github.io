@@ -9,6 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "check": "astro check",
+    "format": "prettier --plugin prettier-plugin-astro --write \"src/**/*.{astro,ts,js,css}\" \"src/*.ts\" \"*.{json,mjs,md}\" \"docs/**/*.md\"",
+    "format:check": "prettier --plugin prettier-plugin-astro --check \"src/**/*.{astro,ts,js,css}\" \"src/*.ts\" \"*.{json,mjs,md}\" \"docs/**/*.md\"",
     "preview": "astro preview",
     "astro": "astro"
   },

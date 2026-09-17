@@ -1,29 +1,20 @@
-# AR Blog
+# 发布说明
 
-The source lives at `/home/ar/Personal Blogs/my-blog` in WSL.
+日常写作、开发、发布和故障恢复已经集中到以下文档：
 
-## Write
+- [项目首页与快速开始](README.md)
+- [网站管理手册](docs/网站管理.md)
+- [文章模板](docs/文章模板.md)
 
-Add a Markdown or MDX file in `src/content/blog/` with `title`, `description`, `pubDate`, and `category` in YAML frontmatter. Optional fields: `updatedDate`, `heroImage` (relative source asset), `cover` (public asset path).
+## 发布原理
 
-The three Chinese starter articles are editable examples. Existing starter articles are retained in the default category. Navigation, category counts, archive, search, table of contents and RSS are generated from the content collection.
+推送到 GitHub 仓库的 `main` 分支后，`.github/workflows/` 中的工作流会执行：
 
-## Run
+1. 使用 Node.js 22 安装依赖。
+2. 执行 `npm run build`。
+3. 上传 `dist/`。
+4. 发布到 GitHub Pages。
 
-```sh
-npm ci
-npm run dev -- --host 0.0.0.0 --background
-npm run astro -- dev status
-npm run astro -- dev stop
-npm run build
-```
+线上地址：<https://arteaaaa.github.io/ARTEAAA.github.io/>
 
-The configured base path is `/ARTEAAA.github.io/`. The local preview is normally `http://localhost:4321/ARTEAAA.github.io/` (see server output for the chosen port).
-
-## Publish
-
-The existing GitHub Actions workflow publishes `dist` to GitHub Pages when `main` is pushed. The configured public URL is `https://ARTEAAAA.github.io/ARTEAAA.github.io/`.
-
-## Image Credit
-
-Mountain photograph source: https://images.unsplash.com/photo-1464822759023-fed622ff2c3b. The image is stored locally at `public/mountains.jpg`; rendering does not depend on an external image host.
+`astro.config.mjs` 中的 `site` 和 `base` 决定线上域名与子路径。除非仓库名或域名发生变化，否则不要修改它们。
